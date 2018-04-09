@@ -5,6 +5,7 @@
 function ScreenSize = fGetScreenResolution
 % We can do this by calling
 screenid = max(Screen('Screens')); % this will automatically capture the secondary display
+% alternatively the screenid can be stated
 resolution = Screen(screenid,'resolution');
 
 % resolution is a structure with 4 fields
