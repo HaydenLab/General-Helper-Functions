@@ -1,44 +1,42 @@
+% Updated 20180411 Cindy Jiaxin Tu
+ % Debug: check if this is the correct sreenid used
+ 
 % MAM 20170206  Updated to work on PC using NI USB 6501 DIO card.
 %   using reward_digital_JuicerN to drive multiple juicers
 % CES MAM TB 2/6/2011
 
 %*** Calibration program for monkey using Eyelink
 % ESCAPE stops the calibration
-% RIGHT ARROW starts/accepts trial
+
+% RIGHT ARROW starts/accepts tr ial
 % ENTER starts/accepts trial AND rewards the monkey
 % LEFT ARROW goes to previous trial
 % SPACE rewards the monkey
 % RIGHT CTRL takes dot off screen
 
 function EyeCalibrationNEW
-    clear
-
+clear allq
+screenid = 1;  % CHANGE ME %
 % Variables that can/should be changed according to calibration
-rewardduration = .18; % Reward duration
+rewardduration = .14; % Reward duration % CHANGE ME %
 flicker = 0; % Dot flickering on (1) or off (0)
 hertz = 5; % Hertz of flicker
 radius = 12; % Radius of dots
-backcolor = [50 50 50]; % Background color
+backcolor = [50 50 50];% Background color
 maincolor = [255 255 0]; % Dot color
 offcolor = [0 255 0]; % Dot flicker color
 feedbackcolor = [128 255 128]; % Feedback dot color
-global s
-%s = daq.createSession('ni');
-%addDigitalChannel(s,'Dev3','Port2/line0:1','OutputOnly');
 
-% Set up Eyelink
 KbName('UnifyKeyNames');
-% jheapcl; %Clear java heap, because psychtoolbox sucks
-
+resolution = Screen(screenid,'resolution'); % get the resolution of current screen
 Screen('Preference', 'VisualDebugLevel', 0);
 Screen('Preference', 'Verbosity', 0); % Hides PTB Warnings
-window = Screen('OpenWindow', 1, 0);
-if ~Eyelink('IsConnected')
+window = Screen('OpenWindow', screenid, 0);
+if ~Eyelink('IsConnected'), 
     Eyelink('initialize');
 end % Connects to eyelink computer
 
-Eyelink('Command','screen_pixel_coords = %ld %ld %ld %ld', 0, 0, 1920, 1080); %3440 1440        VR
-
+Eyelink('Command','screen_pixel_coords = %ld %ld %ld %ld', 0, 0, resolution.width, resolution.height);
 Eyelink('startrecording'); % Turns on the recording of eye position
 Eyelink('Command', 'randomize_calibration_order = NO');
 
@@ -49,16 +47,15 @@ Eyelink('Command', 'force_manual_accept = YES');
 Eyelink('StartSetup');
 continuing = 1; % Wait until Eyelink actually enters Setup mode:
 while (continuing == 1) && Eyelink('CurrentMode')~=2 % Mode 2 is setup mode
-    [keyIsDown,secs,keyCode] = KbCheck;
-    if keyIsDown && keyCode(KbName('ESCAPE'))
+    [keyIsDown,~,keyCode] = KbCheck;
+    if keyIsDown && keyCode(KbName('ESCAPE')), 
         continuing = 0;
     end % ESCAPE aborts
 end
 Eyelink('SendKeyButton',double('c'),0,10); % Mode 10 is calibration mode
-
 while (continuing == 1) && Eyelink('CurrentMode')~=10
-    [keyIsDown,secs,keyCode] = KbCheck;
-    if keyIsDown && keyCode(KbName('ESCAPE'))
+    [keyIsDown,~,keyCode] = KbCheck;
+    if keyIsDown && keyCode(KbName('ESCAPE')),
         continuing = 0;
     end % ESCAPE aborts
 end
@@ -86,11 +83,10 @@ time = GetSecs;
 flick = 1;
 feedback = 0;
 between = 0;
-while(continuing);
-    
+while(continuing)   
     % Set screen
     if(between == 0)
-        [dummy, targX, targY] = Eyelink('TargetCheck');
+        [~, targX, targY] = Eyelink('TargetCheck'); % get the coordinate of the target from eyelink
         if(flicker ~= 1 && feedback==0)
             Screen('FillOval', window, maincolor, [(targX-radius) (targY-radius) (targX+radius) (targY+radius)]);
         elseif(flick == 1 && feedback==0)
@@ -102,7 +98,7 @@ while(continuing);
                 Screen('FillOval', window, offcolor, [(targX-radius) (targY-radius) (targX+radius) (targY+radius)]);
             end
         elseif(flick == 0 && feedback==0)
-            if(GetSecs > (time + (1/hertz)))    
+            if(GetSecs > (time + (1/hertz)))
                 flick = 1;
                 Screen('FillOval', window, offcolor, [(targX-radius) (targY-radius) (targX+radius) (targY+radius)]);
                 time = GetSecs;
@@ -165,8 +161,8 @@ sca;
 end
 
 function r = keyCapture()
-[keyIsDown,secs,keyCode] = KbCheck;
-if keyCode(KbName('ESCAPE'))
+[keyIsDown,~,keyCode] = KbCheck;
+if keyCode(KbName('ESCAPE')) 
     r = -1;
 elseif keyCode(KbName('RightArrow'))
     r = 1;
@@ -181,34 +177,8 @@ elseif keyCode(KbName('RightControl'))
 else
     r = 0;
 end
-while keyIsDown, [keyIsDown,secs,keyCode] = KbCheck;
+while keyIsDown
+    [keyIsDown,~,~] = KbCheck;
 end
 end
 
-
-function reward_digital_Juicer1(rewardDuration)%MAM 20170206
-%Changed by MAM 20160707 to use with Sesison-based Interface 
-%This function is to be used with the NI USB 6501 card.
-%Pin 17/P0.0 (Juicer 1) and 25/GND(ground)
-%Pin 18/P0.1 (Juicer 2) and 26/GND(ground)
-warning('off','all');
-global s;
-% rewardDuration = 1;
-%%%Move this into the running code so it initializes when you start the
-%%%program.  The addline command will also turn on strobing capability.
-%%%
- s = daq.createSession('ni');
- addDigitalChannel(s,'Dev3','Port2/line0:1','OutputOnly');
-
-% outputSingleScan(s,[1 0])= juicer1 
-% outputSingleScan(s,[0 1])= juicer2
-outputSingleScan(s,[1 0]);
-tic;
-while toc < rewardDuration;
-end
-outputSingleScan(s,[0 0]);
-
-pause(0.001);
-
-
-end
