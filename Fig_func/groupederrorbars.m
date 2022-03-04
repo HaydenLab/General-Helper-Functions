@@ -1,5 +1,5 @@
 %grouped error bars
-function groupederrorbars(varargin)
+function hBar = groupederrorbars(varargin)
 % groupederrorbars(y,error)
 %or groupederrorbars(y,neg,pos)
 
@@ -16,12 +16,12 @@ if size(args{2})~=size(args{1})
 end
 
 % Grab the first delta inputs.
-neg = args{2};
+neg = args{2}';
 
 % Grab the second delta inputs.
 if numel(args) == 3
     % errorbar(x,y,neg,pos,...)
-    pos = args{3};
+    pos = args{3}';
 else
     % errorbar(y,e) or
     % errorbar(x,y,e)
